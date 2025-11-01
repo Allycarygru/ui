@@ -1,0 +1,535 @@
+--[[
+    ╔══════════════════════════════════════════════════════════╗
+    ║           XAVIRX1 UI LIBRARY SEXY LIB AHH             ║
+    ╚══════════════════════════════════════════════════════════╝
+]]
+
+XavirxLib = {}
+XavirxLib.Version = "1.0.0"
+XavirxLib.Flags = {}
+
+
+HttpService = game:GetService("HttpService")
+TweenService = game:GetService("TweenService")
+RunService = game:GetService("RunService")
+UserInputService = game:GetService("UserInputService")
+CoreGui = game:GetService("CoreGui")
+Players = game:GetService("Players")
+LocalPlayer = Players.LocalPlayer
+
+
+XavirxLib.Themes = {
+    Cyberpunk = {
+        Primary = Color3.fromRGB(255, 0, 102),
+        Secondary = Color3.fromRGB(0, 255, 255),
+        Background = Color3.fromRGB(10, 10, 20),
+        Surface = Color3.fromRGB(20, 20, 40),
+        Accent = Color3.fromRGB(138, 43, 226),
+        Text = Color3.fromRGB(255, 255, 255)
+    },
+    Neon = {
+        Primary = Color3.fromRGB(57, 255, 20),
+        Secondary = Color3.fromRGB(255, 20, 147),
+        Background = Color3.fromRGB(5, 5, 5),
+        Surface = Color3.fromRGB(15, 15, 15),
+        Accent = Color3.fromRGB(255, 215, 0),
+        Text = Color3.fromRGB(255, 255, 255)
+    },
+    Ocean = {
+        Primary = Color3.fromRGB(0, 150, 255),
+        Secondary = Color3.fromRGB(0, 255, 200),
+        Background = Color3.fromRGB(5, 15, 25),
+        Surface = Color3.fromRGB(10, 25, 40),
+        Accent = Color3.fromRGB(100, 200, 255),
+        Text = Color3.fromRGB(240, 250, 255)
+    },
+    Sunset = {
+        Primary = Color3.fromRGB(255, 100, 50),
+        Secondary = Color3.fromRGB(255, 200, 50),
+        Background = Color3.fromRGB(20, 10, 30),
+        Surface = Color3.fromRGB(40, 20, 50),
+        Accent = Color3.fromRGB(255, 150, 100),
+        Text = Color3.fromRGB(255, 240, 220)
+    }
+}
+
+CurrentTheme = XavirxLib.Themes.Cyberpunk
+
+
+function Tween(object, properties, duration, style)
+    style = style or Enum.EasingStyle.Exponential
+    TweenService:Create(object, TweenInfo.new(duration or 0.5, style), properties):Play()
+end
+
+function CreateGlow(parent, color)
+    glow = Instance.new("ImageLabel")
+    glow.Name = "Glow"
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxassetid://4695575676"
+    glow.ImageColor3 = color
+    glow.ImageTransparency = 0.5
+    glow.Size = UDim2.new(1, 40, 1, 40)
+    glow.Position = UDim2.new(0, -20, 0, -20)
+    glow.ZIndex = 0
+    glow.Parent = parent
+    return glow
+end
+
+function CreateGradient(parent, colors)
+    gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new(colors)
+    gradient.Rotation = 45
+    gradient.Parent = parent
+    return gradient
+end
+
+function AddCorner(parent, radius)
+    corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius or 12)
+    corner.Parent = parent
+    return corner
+end
+
+function AddStroke(parent, thickness, color)
+    stroke = Instance.new("UIStroke")
+    stroke.Thickness = thickness or 2
+    stroke.Color = color or CurrentTheme.Primary
+    stroke.Transparency = 0.5
+    stroke.Parent = parent
+    return stroke
+end
+
+
+function CreateMainGui()
+
+    existingGui = CoreGui:FindFirstChild("XavirxUI")
+    if existingGui then
+        existingGui:Destroy()
+    end
+
+    gui = Instance.new("ScreenGui")
+    gui.Name = "XavirxUI"
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.ResetOnSpawn = false
+    
+    if gethui then
+        gui.Parent = gethui()
+    else
+        gui.Parent = CoreGui
+    end
+    
+    return gui
+end
+
+
+function XavirxLib:CreateWindow(config)
+    Window = {}
+    Window.Tabs = {}
+    Window.CurrentTab = nil
+    
+
+    config = config or {}
+    config.Title = config.Title or "Xavirx1 UI"
+    config.Theme = config.Theme or "Cyberpunk"
+    config.Size = config.Size or {600, 400}
+    
+
+    if XavirxLib.Themes[config.Theme] then
+        CurrentTheme = XavirxLib.Themes[config.Theme]
+    end
+    
+
+    MainGui = CreateMainGui()
+    
+
+    MainContainer = Instance.new("Frame")
+    MainContainer.Name = "MainContainer"
+    MainContainer.Size = UDim2.new(0, config.Size[1], 0, config.Size[2])
+    MainContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MainContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainContainer.BackgroundColor3 = CurrentTheme.Background
+    MainContainer.BorderSizePixel = 0
+    MainContainer.ClipsDescendants = true
+    MainContainer.Parent = MainGui
+    AddCorner(MainContainer, 20)
+    AddStroke(MainContainer, 2, CurrentTheme.Primary)
+    
+
+    CreateGlow(MainContainer, CurrentTheme.Primary)
+    
+
+    Topbar = Instance.new("Frame")
+    Topbar.Name = "Topbar"
+    Topbar.Size = UDim2.new(1, 0, 0, 50)
+    Topbar.BackgroundColor3 = CurrentTheme.Surface
+    Topbar.BorderSizePixel = 0
+    Topbar.Parent = MainContainer
+    
+
+    topbarGradient = CreateGradient(Topbar, {
+        CurrentTheme.Primary,
+        CurrentTheme.Secondary
+    })
+    
+
+    Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Size = UDim2.new(0, 400, 1, 0)
+    Title.Position = UDim2.new(0, 60, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = config.Title
+    Title.TextColor3 = CurrentTheme.Text
+    Title.TextSize = 24
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Topbar
+    
+
+    Icon = Instance.new("ImageLabel")
+    Icon.Name = "Icon"
+    Icon.Size = UDim2.new(0, 35, 0, 35)
+    Icon.Position = UDim2.new(0, 10, 0.5, 0)
+    Icon.AnchorPoint = Vector2.new(0, 0.5)
+    Icon.BackgroundTransparency = 1
+    Icon.Image = "rbxassetid://4483345998"
+    Icon.ImageColor3 = CurrentTheme.Primary
+    Icon.Parent = Topbar
+    AddCorner(Icon, 8)
+    
+
+    CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "CloseBtn"
+    CloseBtn.Size = UDim2.new(0, 40, 0, 40)
+    CloseBtn.Position = UDim2.new(1, -45, 0.5, 0)
+    CloseBtn.AnchorPoint = Vector2.new(0, 0.5)
+    CloseBtn.BackgroundColor3 = CurrentTheme.Surface
+    CloseBtn.Text = "×"
+    CloseBtn.TextColor3 = CurrentTheme.Text
+    CloseBtn.TextSize = 30
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.Parent = Topbar
+    AddCorner(CloseBtn, 10)
+    
+    CloseBtn.MouseButton1Click:Connect(function()
+        Tween(MainContainer, {Size = UDim2.new(0, 0, 0, 0)}, 0.4)
+        task.wait(0.4)
+        MainGui:Destroy()
+    end)
+    
+
+    CloseBtn.MouseEnter:Connect(function()
+        Tween(CloseBtn, {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}, 0.2)
+    end)
+    
+    CloseBtn.MouseLeave:Connect(function()
+        Tween(CloseBtn, {BackgroundColor3 = CurrentTheme.Surface}, 0.2)
+    end)
+    
+
+    Sidebar = Instance.new("Frame")
+    Sidebar.Name = "Sidebar"
+    Sidebar.Size = UDim2.new(0, 150, 1, -50)
+    Sidebar.Position = UDim2.new(0, 0, 0, 50)
+    Sidebar.BackgroundColor3 = CurrentTheme.Surface
+    Sidebar.BorderSizePixel = 0
+    Sidebar.Parent = MainContainer
+    
+
+    TabList = Instance.new("ScrollingFrame")
+    TabList.Name = "TabList"
+    TabList.Size = UDim2.new(1, -10, 1, -10)
+    TabList.Position = UDim2.new(0, 5, 0, 5)
+    TabList.BackgroundTransparency = 1
+    TabList.BorderSizePixel = 0
+    TabList.ScrollBarThickness = 4
+    TabList.ScrollBarImageColor3 = CurrentTheme.Primary
+    TabList.Parent = Sidebar
+    
+    listLayout = Instance.new("UIListLayout")
+    listLayout.Padding = UDim.new(0, 5)
+    listLayout.Parent = TabList
+    
+
+    PageContainer = Instance.new("Frame")
+    PageContainer.Name = "PageContainer"
+    PageContainer.Size = UDim2.new(1, -160, 1, -60)
+    PageContainer.Position = UDim2.new(0, 155, 0, 55)
+    PageContainer.BackgroundTransparency = 1
+    PageContainer.Parent = MainContainer
+ 
+    MainContainer.Size = UDim2.new(0, 0, 0, 0)
+    Tween(MainContainer, {Size = UDim2.new(0, config.Size[1], 0, config.Size[2])}, 0.6)
+    
+    
+    dragging = false
+    dragInput = nil
+    dragStart = nil
+    startPos = nil
+    
+    function Update(input)
+        delta = input.Position - dragStart
+        Tween(MainContainer, {
+            Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        }, 0.1, Enum.EasingStyle.Linear)
+    end
+    
+    Topbar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainContainer.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    Topbar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            Update(input)
+        end
+    end)
+    
+-- this is the tab of da window like rayfield
+    function Window:CreateTab(tabName, icon)
+        Tab = {}
+        Tab.Elements = {}
+        
+
+        TabBtn = Instance.new("TextButton")
+        TabBtn.Name = tabName
+        TabBtn.Size = UDim2.new(1, 0, 0, 45)
+        TabBtn.BackgroundColor3 = CurrentTheme.Surface
+        TabBtn.Text = ""
+        TabBtn.Parent = TabList
+        AddCorner(TabBtn, 10)
+        
+
+        tabIcon = Instance.new("ImageLabel")
+        tabIcon.Size = UDim2.new(0, 25, 0, 25)
+        tabIcon.Position = UDim2.new(0, 10, 0.5, 0)
+        tabIcon.AnchorPoint = Vector2.new(0, 0.5)
+        tabIcon.BackgroundTransparency = 1
+        tabIcon.Image = icon or "rbxassetid://4483345998"
+        tabIcon.ImageColor3 = CurrentTheme.Text
+        tabIcon.Parent = TabBtn
+        
+
+        tabText = Instance.new("TextLabel")
+        tabText.Size = UDim2.new(1, -45, 1, 0)
+        tabText.Position = UDim2.new(0, 45, 0, 0)
+        tabText.BackgroundTransparency = 1
+        tabText.Text = tabName
+        tabText.TextColor3 = CurrentTheme.Text
+        tabText.TextSize = 14
+        tabText.Font = Enum.Font.GothamSemibold
+        tabText.TextXAlignment = Enum.TextXAlignment.Left
+        tabText.Parent = TabBtn
+        
+ 
+        Page = Instance.new("ScrollingFrame")
+        Page.Name = tabName .. "Page"
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.BorderSizePixel = 0
+        Page.ScrollBarThickness = 6
+        Page.ScrollBarImageColor3 = CurrentTheme.Primary
+        Page.Visible = false
+        Page.Parent = PageContainer
+        
+        pageLayout = Instance.new("UIListLayout")
+        pageLayout.Padding = UDim.new(0, 10)
+        pageLayout.Parent = Page
+        
+
+        TabBtn.MouseButton1Click:Connect(function()
+            -- Cacher toutes les pages
+            for _, page in pairs(PageContainer:GetChildren()) do
+                if page:IsA("ScrollingFrame") then
+                    page.Visible = false
+                end
+            end
+            
+   
+            for _, btn in pairs(TabList:GetChildren()) do
+                if btn:IsA("TextButton") then
+                    Tween(btn, {BackgroundColor3 = CurrentTheme.Surface}, 0.2)
+                end
+            end
+            
+
+            Page.Visible = true
+            Tween(TabBtn, {BackgroundColor3 = CurrentTheme.Primary}, 0.2)
+            Window.CurrentTab = Tab
+        end)
+        
+
+        TabBtn.MouseEnter:Connect(function()
+            if Page.Visible == false then
+                Tween(TabBtn, {BackgroundColor3 = CurrentTheme.Accent}, 0.2)
+            end
+        end)
+        
+        TabBtn.MouseLeave:Connect(function()
+            if Page.Visible == false then
+                Tween(TabBtn, {BackgroundColor3 = CurrentTheme.Surface}, 0.2)
+            end
+        end)
+        
+
+        function Tab:CreateToggle(config)
+            config = config or {}
+            config.Name = config.Name or "Toggle"
+            config.Default = config.Default or false
+            config.Callback = config.Callback or function() end
+            
+            ToggleFrame = Instance.new("Frame")
+            ToggleFrame.Size = UDim2.new(1, -10, 0, 45)
+            ToggleFrame.BackgroundColor3 = CurrentTheme.Surface
+            ToggleFrame.Parent = Page
+            AddCorner(ToggleFrame, 10)
+            CreateGlow(ToggleFrame, CurrentTheme.Primary)
+            
+            ToggleLabel = Instance.new("TextLabel")
+            ToggleLabel.Size = UDim2.new(1, -60, 1, 0)
+            ToggleLabel.Position = UDim2.new(0, 15, 0, 0)
+            ToggleLabel.BackgroundTransparency = 1
+            ToggleLabel.Text = config.Name
+            ToggleLabel.TextColor3 = CurrentTheme.Text
+            ToggleLabel.TextSize = 14
+            ToggleLabel.Font = Enum.Font.Gotham
+            ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            ToggleLabel.Parent = ToggleFrame
+            
+            ToggleButton = Instance.new("TextButton")
+            ToggleButton.Size = UDim2.new(0, 50, 0, 25)
+            ToggleButton.Position = UDim2.new(1, -60, 0.5, 0)
+            ToggleButton.AnchorPoint = Vector2.new(0, 0.5)
+            ToggleButton.BackgroundColor3 = config.Default and CurrentTheme.Primary or Color3.fromRGB(50, 50, 50)
+            ToggleButton.Text = ""
+            ToggleButton.Parent = ToggleFrame
+            AddCorner(ToggleButton, 25)
+            
+            ToggleCircle = Instance.new("Frame")
+            ToggleCircle.Size = UDim2.new(0, 20, 0, 20)
+            ToggleCircle.Position = config.Default and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+            ToggleCircle.AnchorPoint = Vector2.new(0, 0.5)
+            ToggleCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            ToggleCircle.Parent = ToggleButton
+            AddCorner(ToggleCircle, 20)
+            
+            toggled = config.Default
+            
+            ToggleButton.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                
+                Tween(ToggleButton, {
+                    BackgroundColor3 = toggled and CurrentTheme.Primary or Color3.fromRGB(50, 50, 50)
+                }, 0.3)
+                
+                Tween(ToggleCircle, {
+                    Position = toggled and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+                }, 0.3)
+                
+                config.Callback(toggled)
+            end)
+            
+            return {
+                Set = function(value)
+                    toggled = value
+                    Tween(ToggleButton, {
+                        BackgroundColor3 = toggled and CurrentTheme.Primary or Color3.fromRGB(50, 50, 50)
+                    }, 0.3)
+                    Tween(ToggleCircle, {
+                        Position = toggled and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+                    }, 0.3)
+                end
+            }
+        end
+        
+
+        if #Window.Tabs == 0 then
+            Page.Visible = true
+            Tween(TabBtn, {BackgroundColor3 = CurrentTheme.Primary}, 0.2)
+            Window.CurrentTab = Tab
+        end
+        
+        table.insert(Window.Tabs, Tab)
+        return Tab
+    end
+    
+    return Window
+end
+
+function XavirxLib:Notify(config)
+    config = config or {}
+    config.Title = config.Title or "Notification"
+    config.Content = config.Content or "Content"
+    config.Duration = config.Duration or 3
+    
+    notifGui = Instance.new("ScreenGui")
+    notifGui.Name = "XavirxNotif"
+    if gethui then
+        notifGui.Parent = gethui()
+    else
+        notifGui.Parent = CoreGui
+    end
+    
+    notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0, 0, 0, 0)
+    notif.Position = UDim2.new(1, 10, 0, 20)
+    notif.AnchorPoint = Vector2.new(1, 0)
+    notif.BackgroundColor3 = CurrentTheme.Surface
+    notif.Parent = notifGui
+    AddCorner(notif, 12)
+    AddStroke(notif, 2, CurrentTheme.Primary)
+    CreateGlow(notif, CurrentTheme.Primary)
+    
+    title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 0, 25)
+    title.Position = UDim2.new(0, 10, 0, 5)
+    title.BackgroundTransparency = 1
+    title.Text = config.Title
+    title.TextColor3 = CurrentTheme.Text
+    title.TextSize = 16
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = notif
+    
+    content = Instance.new("TextLabel")
+    content.Size = UDim2.new(1, -20, 1, -35)
+    content.Position = UDim2.new(0, 10, 0, 30)
+    content.BackgroundTransparency = 1
+    content.Text = config.Content
+    content.TextColor3 = CurrentTheme.Text
+    content.TextSize = 13
+    content.Font = Enum.Font.Gotham
+    content.TextXAlignment = Enum.TextXAlignment.Left
+    content.TextYAlignment = Enum.TextYAlignment.Top
+    content.TextWrapped = true
+    content.Parent = notif
+    
+    Tween(notif, {
+        Size = UDim2.new(0, 300, 0, 80),
+        Position = UDim2.new(1, -10, 0, 20)
+    }, 0.5)
+    
+    task.delay(config.Duration, function()
+        Tween(notif, {
+            Position = UDim2.new(1, 10, 0, 20)
+        }, 0.5)
+        task.wait(0.5)
+        notifGui:Destroy()
+    end)
+end
+
+return XavirxLib
