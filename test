@@ -3,10 +3,9 @@
 	Rayfield Interface Suite
 	by Sirius
 
-	shlex  | Designing + Programming
-	iRay   | Programming
-	Max    | Programming
-	Damian | Programming
+	shlex | Designing + Programming
+	iRay  | Programming
+	Max   | Programming
 
 ]]
 
@@ -69,16 +68,16 @@ local function loadWithTimeout(url: string, timeout: number?): ...any
 	return if success then result else nil
 end
 
-local requestsDisabled = true --getgenv and getgenv().DISABLE_RAYFIELD_REQUESTS
+local requestsDisabled = getgenv and getgenv().DISABLE_RAYFIELD_REQUESTS
 local InterfaceBuild = '3K3W'
 local Release = "Build 1.68"
-local RayfieldFolder = "Void Interface"
+local RayfieldFolder = "Rayfield"
 local ConfigurationFolder = RayfieldFolder.."/Configurations"
 local ConfigurationExtension = ".rfld"
 local settingsTable = {
 	General = {
 		-- if needs be in order just make getSetting(name)
-		rayfieldOpen = {Type = 'bind', Value = 'K', Name = 'RVoid Keybind'},
+		rayfieldOpen = {Type = 'bind', Value = 'K', Name = 'Rayfield Keybind'},
 		-- buildwarnings
 		-- rayfieldprompts
 
@@ -184,7 +183,7 @@ local function loadSettings()
 
 	if not success then 
 		if writefile then
-			warn('Void had an issue accessing configuration saving capability.')
+			warn('Rayfield had an issue accessing configuration saving capability.')
 		end
 	end
 end
@@ -199,51 +198,7 @@ if debugX then
 	warn('Settings Loaded')
 end
 
-local analyticsLib
-local sendReport = function(ev_n, sc_n) warn("Failed to load report function") end
-if not requestsDisabled then
-	if debugX then
-		warn('Querying Settings for Reporter Information')
-	end	
-	analyticsLib = loadWithTimeout("https://analytics.sirius.menu/script")
-	if not analyticsLib then
-		warn("Failed to load analytics reporter")
-		analyticsLib = nil
-	elseif analyticsLib and type(analyticsLib.load) == "function" then
-		analyticsLib:load()
-	else
-		warn("Analytics library loaded but missing load function")
-		analyticsLib = nil
-	end
-	sendReport = function(ev_n, sc_n)
-		if not (type(analyticsLib) == "table" and type(analyticsLib.isLoaded) == "function" and analyticsLib:isLoaded()) then
-			warn("Analytics library not loaded")
-			return
-		end
-		if useStudio then
-			print('Sending Analytics')
-		else
-			if debugX then warn('Reporting Analytics') end
-			analyticsLib:report(
-				{
-					["name"] = ev_n,
-					["script"] = {["name"] = sc_n, ["version"] = Release}
-				},
-				{
-					["version"] = InterfaceBuild
-				}
-			)
-			if debugX then warn('Finished Report') end
-		end
-	end
-	if cachedSettings and (#cachedSettings == 0 or (cachedSettings.System and cachedSettings.System.usageAnalytics and cachedSettings.System.usageAnalytics.Value)) then
-		sendReport("execution", "Void")
-	elseif not cachedSettings then
-		sendReport("execution", "Void")
-	end
-end
-
-local promptUser = 2
+local promptUser = math.random(1,6)
 
 if promptUser == 1 and prompt and type(prompt.create) == "function" then
 	prompt.create(
@@ -257,6 +212,62 @@ if promptUser == 1 and prompt and type(prompt.create) == "function" then
 
 		end
 	)
+end
+
+local success, analyticsLib
+if not requestsDisabled then
+	if debugX then
+		warn('Querying Settings for Reporter Information')
+	end	local function safeLoadAnalyticsLib()
+		if not requestFunc then
+			return nil, "No request function available"
+		end
+		local req = requestFunc({ Url = "https://analytics.sirius.menu/script", Method = "GET" })
+		if not req or not req.Success then
+			return nil, "Failed to load analytics library: " .. (req and req.StatusCode or "No response")
+		end
+		if not loadstring or loadstring("return 2 + 2")() ~= 4 then
+			return nil, "loadstring is not available"
+		end
+		return loadstring(req.Body)()
+	end
+	success, analyticsLib = pcall(safeLoadAnalyticsLib)
+	if not success then
+		warn("Failed to load analytics reporter")
+		analyticsLib = nil
+	elseif analyticsLib and type(analyticsLib.load) == "function" then
+		analyticsLib:load()
+	else
+		warn("Analytics library loaded but missing load function")
+		analyticsLib = nil
+	end
+	local function sendReport()
+		if not (type(analyticsLib) == "table" and type(analyticsLib.isLoaded) == "function" and analyticsLib:isLoaded()) then
+
+			warn("Analytics library not loaded")
+			return
+		end
+		if useStudio then
+			print('Sending Analytics')
+		else
+			if debugX then warn('Reporting Analytics') end
+			analyticsLib:report(
+				{
+					["name"] = "execution",
+					["script"] = {["name"] = "Rayfield", ["version"] = Release}
+				},
+				{
+					["version"] = InterfaceBuild
+				}
+			)
+			if debugX then warn('Finished Report') end
+		end
+	end
+	if cachedSettings and (#cachedSettings == 0 or (cachedSettings.System and cachedSettings.System.usageAnalytics and cachedSettings.System.usageAnalytics.Value)) then
+		sendReport()
+	elseif not cachedSettings then
+		sendReport()
+	end
 end
 
 if debugX then
@@ -653,16 +664,16 @@ local Players = getService("Players")
 local CoreGui = getService("CoreGui")
 
 -- Interface Management
---13135804039
-local Void = useStudio and script.Parent:FindFirstChild('Void') or game:GetObjects("rbxassetid://10804731440")[1]
+
+local Rayfield = useStudio and script.Parent:FindFirstChild('Rayfield') or game:GetObjects("rbxassetid://10804731440")[1]
 local buildAttempts = 0
 local correctBuild = false
 local warned
 local globalLoaded
-local voidDestroyed = false -- True when RayfieldLibrary:Destroy() is called
+local rayfieldDestroyed = false -- True when RayfieldLibrary:Destroy() is called
 
 repeat
-	if Void:FindFirstChild('Build') and Void.Build.Value == InterfaceBuild then
+	if Rayfield:FindFirstChild('Build') and Rayfield.Build.Value == InterfaceBuild then
 		correctBuild = true
 		break
 	end
@@ -670,42 +681,42 @@ repeat
 	correctBuild = false
 
 	if not warned then
-		warn('Void | Build Mismatch')
-		print('Void may encounter issues as you are running an incompatible interface version ('.. ((Void:FindFirstChild('Build') and Void.Build.Value) or 'No Build') ..').\n\nThis version of Void is intended for interface build '..InterfaceBuild..'.')
+		warn('Rayfield | Build Mismatch')
+		print('Rayfield may encounter issues as you are running an incompatible interface version ('.. ((Rayfield:FindFirstChild('Build') and Rayfield.Build.Value) or 'No Build') ..').\n\nThis version of Rayfield is intended for interface build '..InterfaceBuild..'.')
 		warned = true
 	end
 
-	toDestroy, Void = Void, useStudio and script.Parent:FindFirstChild('Void') or game:GetObjects("rbxassetid://10804731440")[1]
+	toDestroy, Rayfield = Rayfield, useStudio and script.Parent:FindFirstChild('Rayfield') or game:GetObjects("rbxassetid://10804731440")[1]
 	if toDestroy and not useStudio then toDestroy:Destroy() end
 
 	buildAttempts = buildAttempts + 1
 until buildAttempts >= 2
 
-Void.Enabled = false
+Rayfield.Enabled = false
 
 if gethui then
-	Void.Parent = gethui()
+	Rayfield.Parent = gethui()
 elseif syn and syn.protect_gui then 
-	syn.protect_gui(Void)
-	Void.Parent = CoreGui
+	syn.protect_gui(Rayfield)
+	Rayfield.Parent = CoreGui
 elseif not useStudio and CoreGui:FindFirstChild("RobloxGui") then
-	Void.Parent = CoreGui:FindFirstChild("RobloxGui")
+	Rayfield.Parent = CoreGui:FindFirstChild("RobloxGui")
 elseif not useStudio then
-	Void.Parent = CoreGui
+	Rayfield.Parent = CoreGui
 end
 
 if gethui then
 	for _, Interface in ipairs(gethui():GetChildren()) do
-		if Interface.Name == Void.Name and Interface ~= Void then
+		if Interface.Name == Rayfield.Name and Interface ~= Rayfield then
 			Interface.Enabled = false
-			Interface.Name = "Void-Old"
+			Interface.Name = "Rayfield-Old"
 		end
 	end
 elseif not useStudio then
 	for _, Interface in ipairs(CoreGui:GetChildren()) do
-		if Interface.Name == Void.Name and Interface ~= Void then
+		if Interface.Name == Rayfield.Name and Interface ~= Rayfield then
 			Interface.Enabled = false
-			Interface.Name = "Void-Old"
+			Interface.Name = "Rayfield-Old"
 		end
 	end
 end
@@ -714,7 +725,7 @@ end
 local minSize = Vector2.new(1024, 768)
 local useMobileSizing
 
-if Void.AbsoluteSize.X < minSize.X and Void.AbsoluteSize.Y < minSize.Y then
+if Rayfield.AbsoluteSize.X < minSize.X and Rayfield.AbsoluteSize.Y < minSize.Y then
 	useMobileSizing = true
 end
 
@@ -725,20 +736,20 @@ end
 
 -- Object Variables
 
-local Main = Void.Main
-local MPrompt = Void:FindFirstChild('Prompt')
+local Main = Rayfield.Main
+local MPrompt = Rayfield:FindFirstChild('Prompt')
 local Topbar = Main.Topbar
 local Elements = Main.Elements
 local LoadingFrame = Main.LoadingFrame
 local TabList = Main.TabList
-local dragBar = Void:FindFirstChild('Drag')
+local dragBar = Rayfield:FindFirstChild('Drag')
 local dragInteract = dragBar and dragBar.Interact or nil
 local dragBarCosmetic = dragBar and dragBar.Drag or nil
 
 local dragOffset = 255
 local dragOffsetMobile = 150
 
-Void.DisplayOrder = 100
+Rayfield.DisplayOrder = 100
 LoadingFrame.Version.Text = Release
 
 -- Thanks to Latte Softworks for the Lucide integration for Roblox
@@ -751,13 +762,13 @@ local Minimised = false
 local Hidden = false
 local Debounce = false
 local searchOpen = false
-local Notifications = Void.Notifications
+local Notifications = Rayfield.Notifications
 
-local SelectedTheme = oidLibrary.Theme.Default
+local SelectedTheme = RayfieldLibrary.Theme.Default
 
 local function ChangeTheme(Theme)
 	if typeof(Theme) == 'string' then
-		SelectedTheme = https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.luaLibrary.Theme[Theme]
+		SelectedTheme = RayfieldLibrary.Theme[Theme]
 	elseif typeof(Theme) == 'table' then
 		SelectedTheme = Theme
 	end
@@ -1604,10 +1615,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 		makefolder(RayfieldFolder)
 	end
 
-	-- Attempt to report an event to analytics
-	if not requestsDisabled then
-		sendReport("window_created", Settings.Name or "Unknown")
-	end
 	local Passthrough = false
 	Topbar.Title.Text = Settings.Name
 
@@ -3979,10 +3986,10 @@ if CEnabled and Main:FindFirstChild('Notice') then
 	TweenService:Create(Main.Notice, TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 280, 0, 35), Position = UDim2.new(0.5, 0, 0, -50), BackgroundTransparency = 0.5}):Play()
 	TweenService:Create(Main.Notice.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0.1}):Play()
 end
--- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA why :(
---if not useStudio then
---	task.spawn(loadWithTimeout, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Sirius/refs/heads/request/boost.lua")
---end
+
+-- if not useStudio then
+-- 	task.spawn(loadWithTimeout, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Sirius/refs/heads/request/boost.lua")
+-- end
 
 task.delay(4, function()
 	RayfieldLibrary.LoadConfiguration()
